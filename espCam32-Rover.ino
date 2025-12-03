@@ -5,8 +5,28 @@ const char* password = "123456789";
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 #include "app_httpd.cpp" // Incluir el archivo para la declaración de startWebServer()
+// Definición de los pines para el sensor ultrasónico HC-SR04
+const int trigPin = 25; // Pin de disparo (Trigger)
+const int echoPin = 26; // Pin de eco (Echo)
 
+// Declaración de funciones para el sensor ultrasónico
+void initUltrasonic();
+long readUltrasonicDistance();
 
+// Enumeración para los modos de operación
+enum RobotMode {
+  MODE_REMOTE,
+  MODE_AUTO
+};
+
+// Variable global para el modo actual del robot
+RobotMode currentMode = MODE_REMOTE;
+
+// Variables de estado del movimiento (antes en app_httpd.cpp)
+int speed = 255;
+int noStop = 0;
+enum state {fwd,rev,stp};
+state actstate = stp;
 
 const int MotPin0 = 12;
 const int MotPin1 = 13;
@@ -42,6 +62,7 @@ void setup(){
   // Remote Control Car
   initMotors();
   initServo();
+  initUltrasonic(); // Inicializar el sensor ultrasónico
 
   ledcSetup(7, 5000, 8);
   ledcAttachPin(4, 7);  //pin4 is LED
@@ -62,7 +83,103 @@ void setup(){
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  delay(1000);
-  Serial.printf("RSSi: %ld dBm\n", WiFi.RSSI());
+  if (currentMode == MODE_REMOTE) {
+    // La lógica de control remoto se maneja principalmente por HTTP en app_httpd.cpp
+    // Aquí podríamos añadir un pequeño delay para evitar un loop muy rápido si no hay actividad
+    delay(100);
+    Serial.printf("Modo Control Remoto - RSSi: %ld dBm\n", WiFi.RSSI());
+  } else { // MODE_AUTO
+    // Lógica del modo automático (FinderBot)
+    Serial.println("Modo Automatico - Ejecutando FinderBot...");
+    long distance = readUltrasonicDistance();
+    Serial.printf("Distancia: %ld cm\n", distance);
+
+    // Lógica básica: si detecta un obstáculo cerca, gira; de lo contrario, avanza
+    if (distance > 0 && distance < 20) { // Obstáculo a menos de 20 cm
+      Serial.println("Obstaculo detectado. Girando...");
+      stopMotors();
+      delay(200);
+      turnRight(); // Opciones: turnLeft, turnRight, moveBackward
+      delay(500); // Gira por 0.5 segundos
+      stopMotors();
+      delay(200);
+      moveForward(); // Intenta avanzar un poco después de girar
+      delay(500);
+    } else {
+      moveForward(); // Avanza si no hay obstáculos
+    }
+    delay(100); // Pequeña pausa para evitar un loop muy rápido
+  }
+}
+
+// Implementación de funciones de movimiento (extraídas de app_httpd.cpp)
+void moveForward() {
+  Serial.println("Forward");
+  actstate = fwd;
+  ledcWrite(4,speed);  // pin 12
+  ledcWrite(3,0);      // pin 13
+  ledcWrite(5,speed);  // pin 14
+  ledcWrite(6,0);      // pin 15
+  delay(200);
+}
+
+void turnLeft() {
+  Serial.println("TurnLeft");
+  // Implementación original de turnLeft
+  ledcWrite(3,0);
+  ledcWrite(5,0);
+  ledcWrite(4,speed);
+  ledcWrite(6,speed);
+  delay(100);
+  ledcWrite(4,0);
+  ledcWrite(6,0);
+}
+
+void stopMotors() {
+  Serial.println("Stop");
+  actstate = stp;
+  ledcWrite(4,0);
+  ledcWrite(3,0);
+  ledcWrite(5,0);
+  ledcWrite(6,0);
+}
+
+void turnRight() {
+  Serial.println("TurnRight");
+  // Implementación original de turnRight
+  ledcWrite(4,0);
+  ledcWrite(6,0);
+  ledcWrite(3,speed);
+  ledcWrite(5,speed);
+  delay(100);
+  ledcWrite(3, 0);
+  ledcWrite(5, 0);
+}
+
+void moveBackward() {
+  Serial.println("Backward");
+  actstate = rev;
+  ledcWrite(4,0);
+  ledcWrite(3,speed);
+  ledcWrite(5,0);
+  ledcWrite(6,speed);
+  delay(200);
+}
+
+// Implementación de funciones para el sensor ultrasónico
+void initUltrasonic() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+}
+
+long readUltrasonicDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  long duration = pulseIn(echoPin, HIGH);
+  long distanceCm = duration * 0.034 / 2; // Velocidad del sonido en cm/microsegundo
+  return distanceCm;
 }
