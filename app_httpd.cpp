@@ -153,7 +153,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>AUTOMATA ESP32CAM ROBOT</title>
+        <title>ROBOT LIMPIADOR ESP32CAM ROBOT</title>
         <style>
             *{
                 padding: 0; margin: 0;
@@ -213,7 +213,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     </head>
     <body>
          
-        <h1 class="tITULO">AUTOMATA</h1>
+        <h1 class="tITULO">ROBOT LIMPIADOR</h1>
         <a href="https://www.youtube.com/channel/UCKD9PvMAW0nYi681AZbSZSQ/videos" class="LINK">YOUTUBE</a>
 
 
