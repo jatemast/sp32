@@ -6,7 +6,7 @@ enum RobotMode {
 };
 
 // Estados del movimiento
-enum state { fwd, rev, stp };
+enum state { fwd, rev, stp, tnl, tnr }; // tnl = turn left, tnr = turn right
 
 // Variables globales (solo declaración)
 extern RobotMode currentMode;

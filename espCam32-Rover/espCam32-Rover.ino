@@ -86,6 +86,7 @@ void turnLeft() {
     digitalWrite(MOTOR_B_IN2, LOW);
     setMotorSpeed(MOTOR_A_PWM_CHANNEL, speed);
     setMotorSpeed(MOTOR_B_PWM_CHANNEL, speed);
+    actstate = tnl;
 }
 
 void turnRight() {
@@ -96,6 +97,7 @@ void turnRight() {
     digitalWrite(MOTOR_B_IN2, HIGH);
     setMotorSpeed(MOTOR_A_PWM_CHANNEL, speed);
     setMotorSpeed(MOTOR_B_PWM_CHANNEL, speed);
+    actstate = tnr;
 }
 
 // ============================
