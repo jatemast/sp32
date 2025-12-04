@@ -80,8 +80,17 @@ static esp_err_t cmd_handler(httpd_req_t *req)
             else if (val == 3) stopMotors();
             else if (val == 4) turnLeft();
             else if (val == 5) moveBackward();
-
-            if (noStop != 1) stopMotors();
+        }
+        
+        if (noStop != 1 && val == 3) { // Solo detener motores si noStop es 0 y el comando es STOP
+            stopMotors();
+        } else if (noStop != 1 && (val == 1 || val == 2 || val == 4 || val == 5)) {
+            // Si noStop es 0 y se recibe un comando de movimiento, no detener los motores inmediatamente
+            // Esto permite que el movimiento continúe hasta que se envíe un comando de parada explícito (val == 3)
+            // o se levante el botón del control remoto.
+            // La lógica de detener motores al soltar el botón se maneja en el HTML (onmouseup="move(3)").
+        } else if (noStop == 1 && val == 3) {
+            stopMotors(); // Si noStop es 1, permitir detener los motores explícitamente.
         }
         else {
             Serial.println("Robot en Modo Automático. Control remoto deshabilitado.");
