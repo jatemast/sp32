@@ -145,17 +145,15 @@ void setup() {
 
     stopMotors();
 
-    // Conexión WiFi
-    WiFi.begin("findebot", "contraseña123456789");
-    Serial.print("Conectando a WiFi...");
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
+    // Configuración del Access Point (AP)
+    const char *ssid = "ESP32_Rover_AP";
+    const char *password = "password123"; // Cambia esta contraseña por una más segura si es necesario
 
-    Serial.println("");
-    Serial.print("IP del robot: ");
-    Serial.println(WiFi.localIP());
+    WiFi.softAP(ssid, password);
+    Serial.print("AP creado con SSID: ");
+    Serial.println(ssid);
+    Serial.print("IP del AP: ");
+    Serial.println(WiFi.softAPIP());
 
     // Iniciar servidor web
     startWebServer();
