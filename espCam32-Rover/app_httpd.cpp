@@ -187,7 +187,112 @@ static esp_err_t status_handler(httpd_req_t *req)
 //   PÁGINA HTML
 // ----------------------------------------------------------------
 static const char PROGMEM INDEX_HTML[] = R"rawliteral(
-    << TU HTML SE MANTIENE IGUAL >>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Control ESP32 Rover</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background-color: #f0f0f0; }
+        .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 300px; margin: 20px auto; }
+        .control-button {
+            padding: 20px; font-size: 24px; cursor: pointer; border: none; border-radius: 8px;
+            background-color: #4CAF50; color: white; transition: background-color 0.3s;
+        }
+        .control-button.stop { background-color: #f44336; }
+        .control-button.turn { background-color: #008CBA; }
+        .control-button:active { background-color: #3e8e41; }
+        .speed-control { margin-top: 20px; }
+        input[type="range"] { width: 100%; margin-top: 10px; }
+        .mode-buttons button { padding: 10px 20px; margin: 5px; font-size: 18px; border-radius: 5px; cursor: pointer; }
+        .mode-buttons button.active { background-color: #555; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Control ESP32 Rover</h1>
+
+    <div class="mode-buttons">
+        <button id="remoteModeBtn" class="active" onclick="setMode(0)">Control Remoto</button>
+        <button id="autoModeBtn" onclick="setMode(1)">Modo Automático</button>
+    </div>
+
+    <div class="controls">
+        <div class="spacer"></div>
+        <button class="control-button" onmousedown="move(1)" onmouseup="move(3)">&#9650;</button> <!-- Arriba -->
+        <div class="spacer"></div>
+
+        <button class="control-button turn" onmousedown="move(4)" onmouseup="move(3)">&#9664;</button> <!-- Izquierda -->
+        <button class="control-button stop" onmousedown="move(3)">STOP</button> <!-- Stop -->
+        <button class="control-button turn" onmousedown="move(2)" onmouseup="move(3)">&#9654;</button> <!-- Derecha -->
+
+        <div class="spacer"></div>
+        <button class="control-button" onmousedown="move(5)" onmouseup="move(3)">&#9660;</button> <!-- Abajo -->
+        <div class="spacer"></div>
+    </div>
+
+    <div class="speed-control">
+        <label for="speedSlider">Velocidad: <span id="speedValue">255</span></label>
+        <input type="range" id="speedSlider" min="0" max="255" value="255" onchange="setSpeed(this.value)">
+    </div>
+
+    <script>
+        let currentMode = 0; // 0 for remote, 1 for auto
+
+        function sendCommand(varName, val) {
+            fetch(`/control?var=${varName}&val=${val}`)
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Error al enviar comando:', response.statusText);
+                    }
+                })
+                .catch(error => console.error('Error de red:', error));
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            fetch(`/mode?var=mode&val=${mode}`)
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Error al cambiar modo:', response.statusText);
+                    }
+                    updateModeButtons();
+                })
+                .catch(error => console.error('Error de red:', error));
+        }
+
+        function updateModeButtons() {
+            const remoteBtn = document.getElementById('remoteModeBtn');
+            const autoBtn = document.getElementById('autoModeBtn');
+            if (currentMode === 0) {
+                remoteBtn.classList.add('active');
+                autoBtn.classList.remove('active');
+            } else {
+                remoteBtn.classList.remove('active');
+                autoBtn.classList.add('active');
+            }
+        }
+
+        function move(direction) {
+            if (currentMode === 0) { // Solo permitir movimiento en modo remoto
+                sendCommand('car', direction);
+            } else {
+                alert('El robot está en modo automático. Cambia a "Control Remoto" para moverlo.');
+            }
+        }
+
+        function setSpeed(speed) {
+            document.getElementById('speedValue').innerText = speed;
+            sendCommand('speed', speed);
+        }
+
+        // Inicializar la interfaz al cargar la página
+        window.onload = () => {
+            updateModeButtons();
+            setSpeed(document.getElementById('speedSlider').value); // Enviar velocidad inicial
+        };
+    </script>
+</body>
+</html>
 )rawliteral";
 
 
